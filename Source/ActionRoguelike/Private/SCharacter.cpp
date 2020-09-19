@@ -4,6 +4,7 @@
 #include "SCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -12,10 +13,14 @@ ASCharacter::ASCharacter()
 	PrimaryActorTick.bCanEverTick = true;
     
     SpringArmComp = CreateDefaultSubobject<USpringArmComponent>("SpringArmComponent");
+    SpringArmComp->bUsePawnControlRotation = true; // changes third person camera view (booleans start with b)
     SpringArmComp->SetupAttachment(RootComponent); //
     
     CameraComp = CreateDefaultSubobject<UCameraComponent>("CameraComp");
     CameraComp->SetupAttachment(SpringArmComp); // set camera to spring arm
+    
+    GetCharacterMovement()->bOrientRotationToMovement = true; // rotates character to direction we're moving
+    bUseControllerRotationYaw = false;
     
 }
 
@@ -28,9 +33,34 @@ void ASCharacter::BeginPlay()
 
 void ASCharacter::MoveForward(float Value)
 {
+    FRotator ControlRot = GetControlRotation();
+    ControlRot.Pitch = 0.0f;
+    ControlRot.Roll = 0.0f; // only care about yaw
+    
     // GetActorForwardVector returns vector of where actor is currently looking
-    AddMovementInput(GetActorForwardVector(), Value);
+    AddMovementInput(ControlRot.Vector(), Value);
 
+}
+
+void ASCharacter::MoveRight(float Value)
+{
+    FRotator ControlRot = GetControlRotation();
+    ControlRot.Pitch = 0.0f;
+    ControlRot.Roll = 0.0f;
+    // x: forward (red), y: right (green), z: up (blue)
+    FVector RightVector = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::Y);
+    // GetActorForwardVector returns vector of where actor is currently looking
+    AddMovementInput(GetActorRightVector(), Value);
+
+}
+
+void ASCharacter::PrimaryAttack()
+{
+    FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+    FTransform SpawnTM = FTransform(GetControlRotation(), HandLocation);
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
 }
 
 // Called every frame
@@ -47,8 +77,13 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
     
     // movement +1: forward, 0: neutral, -1: backward
     PlayerInputComponent->BindAxis("MoveForward", this, &ASCharacter::MoveForward);
+    PlayerInputComponent->BindAxis("MoveRight", this, &ASCharacter::MoveRight);
     
     // turning
     PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+    PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+    
+    // allows user
+    PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
 }
 

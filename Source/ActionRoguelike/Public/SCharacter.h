@@ -13,6 +13,11 @@ UCLASS()
 class ACTIONROGUELIKE_API ASCharacter : public ACharacter
 {
 	GENERATED_BODY()
+    
+protected:
+    // allows us to assign a class
+    UPROPERTY(EditAnywhere)
+    TSubclassOf<AActor> ProjectileClass;
 
 public:
 	// Sets default values for this character's properties
@@ -30,6 +35,8 @@ protected:
     
     // value: determines forward or backward
     void MoveForward(float Value);
+    void MoveRight(float Value);
+    void PrimaryAttack();
 
 public:	
 	// Called every frame

@@ -22,6 +22,7 @@ ASCharacter::ASCharacter()
     CameraComp->SetupAttachment(SpringArmComp); // set camera to spring arm
     
     InteractionComp = CreateDefaultSubobject<USInteractionComponent>("InteractionComp");
+
     GetCharacterMovement()->bOrientRotationToMovement = true; // rotates character to direction we're moving
     bUseControllerRotationYaw = false;
     

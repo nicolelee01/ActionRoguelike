@@ -59,6 +59,17 @@ void ASCharacter::MoveRight(float Value)
 
 void ASCharacter::PrimaryAttack()
 {
+    // animation
+    PlayAnimMontage(AttackAnim);
+
+    // timer triggers PrimaryAttack_TimeElapsed after 0.2 seconds
+    GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_TimeElapsed, 0.2f);
+
+    // to clear attack: GetWorldTimerManager().ClearTimer(TimerHandle_PrimaryAttack);
+}
+
+void ASCharacter::PrimaryAttack_TimeElapsed()
+{
     FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
     FTransform SpawnTM = FTransform(GetControlRotation(), HandLocation);
     FActorSpawnParameters SpawnParams;
